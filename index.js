@@ -28,10 +28,12 @@ const main = async (language) => {
     case 'javascript':
       path = './JavaScript';
       imgName = 'javascript-runner';
+      await sh(`cd ${path} && npm init -y && cd ..`);
       break;
     case 'python':
       path = './Python';
       imgName = 'python-runner';
+      await sh(`pipreqs --force ${path}`);
       break;
     default:
       flag = false;
@@ -49,6 +51,16 @@ const main = async (language) => {
   } else {
     console.log('Unknown language found !');
   }
+
+  switch (language.toLowerCase()) {
+    case 'python':
+      await sh(`rm -f ${path}/requirements.txt`);
+      break;
+    case 'javascript':
+      await sh(`rm -rf ${path}/package*.json node_modules/`);
+      break;
+  }
+
 };
 
-main('cpp');
+main('javascript');
