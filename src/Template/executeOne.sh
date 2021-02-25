@@ -22,28 +22,27 @@ dir=$5
 
 # Work
 exec  1> $dir"logfile.txt"
-exec  2> $outputDir
+exec  2> $dir"logfile.txt"
 
 START=$(date +%s.%2N)
 
 if [ "$output" = "" ]; then
     $compiler $fileDir -< $inputDir
-	mv $dir"logfile.txt" $outputDir
 
 else
     $compiler $fileDir $inputDir
 
 	if [ $? -eq 0 ];	then
 		$output -< $inputDir
-		mv $dir"logfile.txt" $outputDir
 	else
 	    $output -< "Compilation Failed"
-		mv $dir"logfile.txt" $outputDir
 	fi
 fi
 
+mv $dir"logfile.txt" $outputDir
 
 END=$(date +%s.%2N)
+
 runtime=$(echo "$END - $START" | bc)
 
 echo "*-------------------------------------------------------------------------*" >> $outputDir

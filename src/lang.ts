@@ -4,20 +4,26 @@ export interface Language {
   execution: string;
 }
 
-export const python: Language = {
+const python: Language = {
   folder: 'Python',
   extension: 'py',
   execution: 'python3',
 };
 
-export const cpp: Language = {
+const cpp: Language = {
   folder: 'C++',
   extension: 'cpp',
   execution: 'g++ -Wall',
 };
 
-export const javascript: Language = {
+const javascript: Language = {
   folder: 'Javascript',
   extension: 'js',
   execution: 'node',
 };
+
+export const languageMap = {
+  'python': python,
+  'cpp': python,
+  'javascript': javascript,
+}

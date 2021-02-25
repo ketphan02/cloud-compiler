@@ -1,6 +1,7 @@
 .vscode/
 dist/
 node_modules/
+tmp/
 
 package-lock.json
 tsconfig.json

@@ -5,45 +5,100 @@ export class Compiler {
   private code: string;
   private language: Language;
   private folderPath: string;
-  private appPath: string;
+  private appDir: string;
+  private outDir: string;
+  private inpDir: string;
   private executeScript: string;
+  private isMany: boolean;
+  private timeout = 1;
 
-  constructor(language: Language, code: string) {
+  constructor(
+    language: Language,
+    code: string,
+    timeout: number,
+    isMany: boolean,
+  ) {
     this.language = language;
     this.code = code;
-    this.folderPath = '/tmp/compile/' + this.language.folder + '/';
-    this.appPath = this.folderPath + 'app.' + this.language.extension;
+    this.timeout = timeout;
+    this.isMany = isMany;
 
-    this.executeScript = this.language.execution + ' ' + this.appPath;
-    this.executeScript = process.cwd() + '/src/Template/executeOne.sh python3 ' + this.appPath + ' '  + process.cwd() + '/tmp/outputsFolder/app.out' + ' ' + process.cwd() + '/tmp/inputsFolder/app.inp' + ' ' + this.folderPath;
+    this.folderPath = '/tmp/compile/' + this.language.folder + '/';
+    this.appDir = this.folderPath + 'app.' + this.language.extension;
+
+    // Mock data
+    this.executeScript = 'echo "Nothing has been decleared yet"';
+    this.outDir = process.cwd() + '/tmp/outputsFolder/custom.out';
+    this.inpDir = '';
   }
 
   /**
    * Copy code to particular folder
    */
-  private prepare = async () => {
-    await console.log('Preparing the environment');
+  private prepare = async (customInp?: string) => {
     await shell.mkdir('-p', this.folderPath);
-    await shell.echo('-e' , this.code).to(this.appPath);
+    await shell.ShellString(this.code).to(this.appDir);
+    if (customInp) {
+      await shell.mkdir('-p', this.folderPath + 'inputsFolder');
+      this.inpDir = this.folderPath + 'inputsFolder/custom.inp';
+      await shell.ShellString(customInp).to(this.inpDir);
+    }
   };
 
   /**
    * Clean dir after executing script
    */
   private clean = async () => {
-    console.log('Succeeded')
-
     await shell.rm('-rf', this.folderPath);
-  }
+  };
 
   /**
    * Execute the code
    */
-  public excute = async () => {
+  public executeOne = async (customInp?: string) => {
+    // Forbiden
+    if (this.isMany) return 403;
+
+    if (customInp) await this.prepare(customInp);
+
+    // Execute running command
+    this.executeScript =
+      'timeout ' +
+      this.timeout +
+      ' ' +
+      process.cwd() +
+      '/src/Template/executeOne.sh ' +
+      this.language.execution +
+      ' ' +
+      this.appDir +
+      ' ' +
+      this.outDir +
+      ' ' +
+      this.inpDir +
+      ' ' +
+      this.folderPath;
+
+    const exitCode = (await shell.exec(this.executeScript)).code;
+
+    if (customInp) await this.clean();
+  };
+
+  public executeMany = async (workingFolder: string) => {
+
     await this.prepare();
-    await console.log('Executing the script')
-    await shell.exec(this.executeScript);
+
+    const testFolders = shell.ls(workingFolder).stdout.split('\n');
+    this.isMany = false;
+    for (let i = 1; i <= testFolders.length - 1; ++ i) {
+      console.log('Running test ' + i);
+      this.inpDir = workingFolder + i + '/' + i + '*.inp';
+      await shell.rm('-f', workingFolder + i + '/' + '*.out');
+      this.outDir = workingFolder + i + '/' + i + '.out';
+      await this.executeOne();
+
+    }
+
+    this.isMany = true;
     await this.clean();
   }
-
 }
