@@ -25,7 +25,6 @@ export class Compiler {
 
     this.folderPath = '/tmp/compile/' + this.language.folder + '/';
     shell.mkdir('-p', this.folderPath);
-
   }
 
   /**
@@ -105,7 +104,7 @@ export class Compiler {
   public executeMany = async (workingFolder: string) => {
     if (!this.isMany) return {
       exitCode: 403,
-      result: [],
+      value: [],
     };
 
     await this.prepare();
@@ -126,13 +125,13 @@ export class Compiler {
       if (res.exitCode === 124) {
         return {
           exitCode: 124,
-          result: [],
+          value: [],
         }
       }
       else if (res.exitCode === 403) {
         return {
           exitCode: 403,
-          result: []
+          value: []
         }
       }
       else if (res.exitCode === 0) runningResults.push(res.value);
@@ -143,7 +142,7 @@ export class Compiler {
 
     return {
       exitCode: 0,
-      result: runningResults,
+      value: runningResults,
     }
   };
 }

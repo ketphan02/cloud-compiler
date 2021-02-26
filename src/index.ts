@@ -23,6 +23,11 @@ const server = app.listen(PORT, () => {
   console.log(`Listening on port ${PORT}`);
 });
 
+const isError = (exitCode: number) => {
+    if (exitCode !== 0) return true;
+    return false; 
+}
+
 app.get('/', async (req, res) => {
 
     const lang = req.query.language;
@@ -39,11 +44,15 @@ app.get('/', async (req, res) => {
 
     if (language && typeof code === 'string' && (typeof timeout === 'string' || typeof timeout === 'number') && isMany === 'true' && typeof req.query.inputsDir === 'string') {
         const result = await runCompiler(language, code, typeof timeout === 'string' ? parseInt(timeout) : timeout, true, undefined, req.query.inputsDir);
-        res.send(result).status(200);
+        
+        if (!isError(result.exitCode)) res.send(result.value).status(200);
+        else res.send('Error: code ' + result.exitCode).status(result.exitCode);
     }
     else if (language && typeof code === 'string' && (typeof timeout === 'string' || typeof timeout === 'number')  && typeof req.query.input === 'string') {
         const result = await runCompiler(language, code, typeof timeout === 'string' ? parseInt(timeout) : timeout, false, req.query.input, undefined);
-        res.send(result).status(200);
+
+        if (!isError(result.exitCode)) res.send(result.value).status(200);
+        else res.send('Error: code ' + result.exitCode).status(result.exitCode);
     }
     else res.sendStatus(404);
 });

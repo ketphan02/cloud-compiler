@@ -1,0 +1,8 @@
+version: '3.6'
+services:
+  compiler:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    ports:
+      - '2106:2106'
