@@ -1,29 +1,26 @@
 import { Compiler } from './Compiler';
-import { languageMap } from './lang';
-import * as shell from 'shelljs';
+import { LanguageMap, Language, validLang } from './lang';
 
-const data = `n = input()\nprint(n)`;
-const inp = '2020 1 1';
-const language = 'python';
+const useLang: validLang = 'cpp';
+const useCodeCpp = '#include <iostream>\nusing namespace std;\nint main() {\n\tint n; cin >> n; cout << n;\n}\n';
+const useCodePython = 'n = input()\nprint(n)'
+const useTimeout = 1;
+const useIsMany = false;
 
-/**
- * Dummy inputs
- */
-const inputDummies = () => {
-    for (let i = 1; i <= 100; ++i) {
-      shell.mkdir('-p', process.cwd() + '/tmp/sample/' + i.toString());
-      shell
-        .ShellString(i.toString())
-        .to(process.cwd() + '/tmp/sample/' + i.toString() + '/' + i.toString() + '.inp');
+export const runCompiler = async (language: validLang, code: string, timeout: number, isMany: boolean, input?: string, inputsDir?: string): (Promise<string[] | string | undefined>) => {
+
+    const compiler = new Compiler(LanguageMap[language], code, timeout, isMany);
+
+    if (isMany) {
+        if (inputsDir) {
+            const result = (await compiler.executeMany(inputsDir)).result;
+            return result;
+        }
     }
-  };
-  
-
-
-const compiler = new Compiler(languageMap[language], data, 1, true);
-
-// compiler.executeOne(inp)
-
-inputDummies();
-
-compiler.executeMany(process.cwd() + '/tmp/sample/');
+    else {
+        if (input) {
+            const result = (await compiler.executeOne(input)).value;
+            return result;
+        }
+    }
+}

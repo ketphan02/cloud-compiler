@@ -1,50 +1,32 @@
 #!/bin/bash
 
-########################################################################
-#	- This is the main script that is used to compile/interpret the source code
-#	- The script takes 5 arguments
-#		1. The compiler that is to compile the source file.
-#		2. The source file that is to be compiled/interpreted
-#		3. The desire output file
-#		4. The input directory
-#       5. The working directory
-#
-#   - Sample execution command:   $> ./executeOne.sh python /tmp/compile/app.py ./outputFolder/app.out ./inputsFolder/app.inp
-#
-########################################################################
-
 # Variable
-compiler=$1
-fileDir=$2
-outputDir=$3
-inputDir=$4
-dir=$5
+outputDir=$1
+inputDir=$2
+dir=$3
+compiler=$4
+optionalFile=$5
 
 # Work
-exec  1> $dir"logfile.txt"
-exec  2> $dir"logfile.txt"
+cd $dir
+exec  1> "logfile.txt"
+exec  2> "logfile.txt"
 
 START=$(date +%s.%2N)
 
 if [ "$output" = "" ]; then
-    $compiler $fileDir -< $inputDir
-
+    $compiler $optionalFile -< $inputDir
 else
-    $compiler $fileDir $inputDir
-
-	if [ $? -eq 0 ];	then
-		$output -< $inputDir
-	else
-	    $output -< "Compilation Failed"
-	fi
+    $compiler $optionalFile $inputDir
 fi
 
-mv $dir"logfile.txt" $outputDir
+mv "logfile.txt" $outputDir
 
 END=$(date +%s.%2N)
 
 runtime=$(echo "$END - $START" | bc)
 
+echo  >> $outputDir
 echo "*-------------------------------------------------------------------------*" >> $outputDir
 echo "RUN TIME: "$runtime >> $outputDir
 

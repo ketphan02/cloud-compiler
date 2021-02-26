@@ -1,29 +1,34 @@
 export interface Language {
   folder: string;
-  extension: string;
+  build?: string;
+  buildFile?: string;
   execution: string;
+  executionFile?: string;
 }
+
+export type validLang = 'python' | 'javascript' | 'cpp';
 
 const python: Language = {
   folder: 'Python',
-  extension: 'py',
-  execution: 'python3',
+  execution: 'python3 app.py',
+  executionFile: 'app.py',
 };
 
 const cpp: Language = {
   folder: 'C++',
-  extension: 'cpp',
-  execution: 'g++ -Wall',
+  build: 'make app',
+  buildFile: 'app.cpp',
+  execution: './app',
 };
 
 const javascript: Language = {
   folder: 'Javascript',
-  extension: 'js',
-  execution: 'node',
+  execution: 'node app.js',
+  executionFile: 'app.js',
 };
 
-export const languageMap = {
+export const LanguageMap = {
   'python': python,
-  'cpp': python,
   'javascript': javascript,
+  'cpp': cpp,
 }
