@@ -1,31 +1,11 @@
-import { Compiler } from './Compiler';
-import { LanguageMap, Language, validLang } from './lang';
+import express from 'express';
+import helmet from 'helmet';
+import cors from 'cors';
 
-const useLang: validLang = 'cpp';
-const useCodeCpp = '#include <iostream>\nusing namespace std;\nint main() {\n\tint n; cin >> n; cout << n;\n}\n';
-const useCodePython = 'n = input()\nprint(n)'
-const useTimeout = 1;
-const useIsMany = false;
+import routes from './routes';
 
-export const runCompiler = async (language: validLang, code: string, timeout: number, isMany: boolean, input?: string, inputsDir?: string): (Promise<{exitCode: number, value: (string[] | string)}>) => {
-
-    const compiler = new Compiler(LanguageMap[language], code, timeout, isMany);
-
-    if (isMany) {
-        if (inputsDir) {
-            const result = (await compiler.executeMany(inputsDir));
-            return result;
-        }
-    }
-    else {
-        if (input) {
-            const result = (await compiler.executeOne(input));
-            return result;
-        }
-    }
-
-    return {
-        exitCode: 2,
-        value: "Not found input",
-    }
-}
+const app = express();
+app.use(helmet());
+app.use(cors());
+app.use(express.json({ limit: '1MB'}));
+app.use('/', routes);

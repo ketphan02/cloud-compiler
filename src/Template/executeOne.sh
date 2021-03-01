@@ -26,7 +26,5 @@ END=$(date +%s.%2N)
 
 runtime=$(echo "$END - $START" | bc)
 
-echo  >> $outputDir
-echo "*-------------------------------------------------------------------------*" >> $outputDir
-echo "RUN TIME: "$runtime >> $outputDir
+echo $runtime >> $outputDir
 

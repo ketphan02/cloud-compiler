@@ -3,6 +3,11 @@ dist/
 node_modules/
 tmp/
 
+
+# Testing folders
+tests/
+test_code/
+
 package-lock.json
 tsconfig.json
 
