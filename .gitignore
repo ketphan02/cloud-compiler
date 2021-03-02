@@ -5,7 +5,6 @@ tmp/
 
 
 # Testing folders
-tests/
 test_code/
 
 package-lock.json

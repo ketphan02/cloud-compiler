@@ -15,5 +15,5 @@ connectDb(config.mongoUrl).then(() => {
   server.listen(config.port, () => {
     console.info('Stage:', config.stage);
     console.info(`SERVER IS RUNNING AT PORT ${config.port}`);
-  });4
+  });
 });
