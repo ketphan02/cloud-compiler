@@ -3,10 +3,6 @@ dist/
 node_modules/
 tmp/
 
-
-# Testing folders
-test_code/
-
 package-lock.json
 
 .env

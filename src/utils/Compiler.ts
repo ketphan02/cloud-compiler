@@ -1,90 +1,92 @@
-import { Language } from './lang';
 import * as shell from 'shelljs';
-import * as fs from 'fs';
+
+import { Language } from './lang';
 
 export class Compiler {
   private code: string;
   private language: Language;
-  private folderPath: string;
-  private outPath: string = '/tmp/compile/';
-  private outDir: string = '/tmp/compile/temp.out';
-  private inpDir: string = '';
   private executeScript: string = 'echo "Nothing has been decleared yet"';
-  private isMany: boolean;
   private timeout = 1;
-  readonly bashRun = (__dirname + '/../Template/executeOne.sh').slice();
+  readonly bashRun = (__dirname + '/../executeOne.sh').slice();
+
+  // Temporary files
+  private tempPath: string = '/tmp/compile/';
+  private outDir: string = '/tmp/compile/temp.out';
+  private inpDir: string = '/tmp/compile/temp.inp';
 
   constructor(
     language: Language,
     code: string,
     timeout: number,
-    isMany: boolean,
   ) {
     this.language = language;
     this.code = code;
     this.timeout = timeout;
-    this.isMany = isMany;
-
-    this.folderPath = '/tmp/compile/' + this.language.folder + '/';
-    shell.mkdir('-p', this.folderPath);
   }
+
+  /** 
+   * Compile files that require building before executing.
+   */
+  private buildFile = async () => {
+    // Code 2: No file found.
+    if (!this.language.build) return 2;
+
+    const exitCode = (await shell.exec(this.language.build)).code;
+
+    return exitCode;
+  };
 
   /**
    * Copy code to particular folder
    */
-  private prepare = async (customInp?: string) => {
-    await shell.mkdir('-p', this.folderPath);
-    await shell.cd(this.folderPath);
-    if (customInp) {
-      await shell.mkdir('-p', this.folderPath + 'inputsFolder/');
-      this.inpDir = this.folderPath + 'inputsFolder/custom.inp';
-      await shell.ShellString(customInp).to(this.inpDir);
+  private prepare = async (inp?: string) => {
 
-      await shell.mkdir('-p', this.outPath);
+    // Run one time only (before )
+    if (inp !== undefined) {
+      // Create a folder to run
+      await shell.mkdir('-p', this.tempPath);
+      await shell.cd(this.tempPath);
+
+      // Create temperary input and output file
+      await shell.touch(this.inpDir);
       await shell.touch(this.outDir);
+
+    // Write the input into the input temp file (inp will be undefined if preparing for multiple files).
+      await shell.ShellString(inp).to(this.inpDir);
     }
 
+    // Build file if need to build (this will create a executable file).
     if (this.language.build && this.language.buildFile) {
       await shell.ShellString(this.code).to(this.language.buildFile);
       const buildReturn = await this.buildFile();
       if (buildReturn !== 0) return buildReturn;
-    } else if (this.language.executionFile)
+    }
+    // Write the code to the temp app file
+    else if (this.language.executionFile) {
       await shell.ShellString(this.code).to(this.language.executionFile);
+    }
   };
 
   /**
    * Clean dir after executing script
    */
   private clean = async () => {
-    await shell.rm('-f', this.folderPath + 'app.*');
-    await shell.rm('-f', this.folderPath + 'inputsFolder/*.inp');
-  };
-
-  private buildFile = async () => {
-    if (!this.language.build) return 2;
-
-    this.executeScript = this.language.build;
-    console.log(this.executeScript);
-
-    const exitCode = (await shell.exec(this.executeScript)).code;
-
-    return exitCode;
+    await shell.rm('-f', this.tempPath + 'app.*');
+    await shell.rm('-f', this.tempPath + '*.inp');
+    await shell.rm('-f', this.tempPath + '*.out');
   };
 
   /**
    * Execute the code
+   * @param inp the custom input written by the user
+   * @param isCreated to control if the temporary files have been created. (default value is false)
    */
-  public executeOne = async (customInp?: string) => {
-    if (this.isMany)
-      return {
-        exitCode: 403,
-        value: 'Forbiden',
-        runTime: -1,
-      };
+  public executeOne = async (input: string, isCreated: boolean = false): Promise<{exitCode: number, value: string, runTime: number}> => {
 
-    if (customInp !== undefined) await this.prepare(customInp);
+    if (!isCreated) await this.prepare(input);
 
     // Execute running command
+    // This script will write the input & runtime into the temporary output file.
     this.executeScript =
       'timeout ' +
       this.timeout +
@@ -95,21 +97,23 @@ export class Compiler {
       ' ' +
       this.inpDir +
       ' ' +
-      this.folderPath +
+      this.tempPath +
       ' ' +
       this.language.execution;
 
+      // This block execute the script and get the exitcode + stdout
     const result = await shell.exec(this.executeScript);
     const exitCode = result.code;
-    const stdout = (await shell.cat(this.outDir)).stdout.trim();
-    const runTime = stdout.slice(stdout.lastIndexOf('\n') + 1);
+    const output = (await shell.cat(this.outDir)).stdout.trim();
+    const runTime = output.slice(output.lastIndexOf('\n') + 1);
 
-    if (customInp !== undefined) await this.clean();
+    // Clear the directory
+    if (!isCreated) await this.clean();
 
     return {
       exitCode: exitCode,
-      value: stdout.replace('\n' + runTime, ''),
-      runTime: runTime, // This key is for further usage
+      value: output.replace('\n' + runTime, ''), // Cut out the last line (runtime)
+      runTime: parseFloat(runTime), // This key is for further usage
     };
   };
 
@@ -117,40 +121,42 @@ export class Compiler {
    * Only run and see the results of the codes, this will not validate the results.
    * @param inputsFolder the
    */
-  public executeMany = async (inputsFolder: string) => {
-    if (!this.isMany)
-      return {
-        exitCode: 403,
-        value: [],
-      };
+  public executeMany = async (testcases: Array<{input: string, output?: string}>): Promise<(Array<{exitCode: number, value: string, runTime: number}>)> => {
 
+    // Prepare the directory
     await this.prepare();
 
-    const runningResults = [];
+    const runningResults: Array<{exitCode: number, value: string, runTime: number}> = [];
 
-    const testFolders = shell.ls(inputsFolder).stdout.split('\n'); // Remove with mongoose
-    this.isMany = false;
-    for (let i = 1; i <= testFolders.length - 1; ++i) {
+    testcases.forEach( async (testcase: {input: string, output?: string}) => {
+      const res = await this.executeOne(testcase.input, true);
 
-      this.inpDir = inputsFolder + i + '/' + i + '*.inp';
-
-      const res = await this.executeOne();
-
+      // Check run time error
       if (res.exitCode === 124) {
-        runningResults.push('[COMPILER]\NRUN TIME ERROR');
-        return {
-          exitCode: 124,
-          value: runningResults,
-        };
-      } else if (res.exitCode === 0) runningResults.push(res.value);
-    }
-    this.isMany = true;
+        runningResults.push({
+          exitCode: res.exitCode,
+          value: '[RUN TIME ERROR]',
+          runTime: -1,
+        });
+      } // Other errors
+      else if (res.exitCode) {
+        runningResults.push({
+          exitCode: res.exitCode,
+          value: '[ERROR]: Code ' + res.exitCode.toString(),
+          runTime: 0,
+        });
+      } // Push the results to result array
+      else if (res.exitCode === 0) runningResults.push({
+        exitCode: 0,
+        value: res.value,
+        runTime: res.runTime,
+      });
+    });
+
+    // Clean the directory
     await this.clean();
 
-    return {
-      exitCode: 0,
-      value: runningResults,
-    };
+    return runningResults;
   };
 
   /**
@@ -158,62 +164,47 @@ export class Compiler {
    * @param expectedOutputsFolder the folder containing the epected output.
    * @param inputsFolder
    */
-  public gradeCode = async ( testcasesFolder: string ) => {
-
-    /**
-     * START: Remove with mongoose
-     */
-    const expectedOutputs: string[] = [];
-    const testCases = fs.readdirSync(testcasesFolder);
-    testCases.forEach((testCase) =>
-      expectedOutputs.push(
-        shell
-          .cat(testcasesFolder + '/' + testCase + '/*.out')
-          .stdout.trim(),
-      ),
-    );
-    /**
-     * STOP 
-     */
-
-    if (!this.isMany)
-      return {
-        exitCode: 403,
-        value: [],
-      };
+  public gradeCode = async ( testcases: Array<{input: string, output: string, runTime: number}> ): Promise<(Array<{exitCode: number, value: string, runTime: number}>)> => {
 
     await this.prepare();
 
-    const runningResults = [];
+    const runningResults: Array<{exitCode: number, value: string, runTime: number}> = [];
 
-    const testFolders = shell.ls(testcasesFolder).stdout.split('\n');
-    this.isMany = false;
-    for (let i = 0; i < testFolders.length - 1; ++i) {
-      this.inpDir = testcasesFolder + '/' + i + '/' + '*.inp'; // Remove with mongoose
-      const expectedOutput = shell.cat(testcasesFolder + '/' + i + '/' + '*.out').stdout.trim(); // Remove with mongoose
+    testcases.forEach( async (testcase: {input: string, output: string}) => {
+      const res = await this.executeOne(testcase.input, true);
 
-      const res = await this.executeOne();
-
+      // Check run time error
       if (res.exitCode === 124) {
-        runningResults.push('TLE');
-        return {
-          exitCode: 124,
-          value: runningResults,
-        };
-      } else if (res.exitCode === 0) runningResults.push(this.checkOutput(res.value, expectedOutput) ? "OK": "WA");
-    }
-    this.isMany = true;
+        runningResults.push({
+          exitCode: res.exitCode,
+          value: 'TLE',
+          runTime: -1,
+        });
+      } // Other errors
+      else if (res.exitCode) {
+        runningResults.push({
+          exitCode: res.exitCode,
+          value: 'ERR',
+          runTime: 0,
+        });
+      } // Push the results to result array
+      else if (res.exitCode === 0) runningResults.push({
+        exitCode: 0,
+        // Check if output and runnning result are equal
+        value: this.grade(res.value, testcase.output) ? 'TLE': 'WA',
+        runTime: res.runTime,
+      });
+    });
+
+    // Clean the directory
     await this.clean();
 
-    return {
-      exitCode: 0,
-      value: runningResults,
-    };
+    return runningResults;
   };
 
 
   // This is isolated because this can be modified to handle more complex cases.
-  private checkOutput(output: string, expectedOutput: string) {
+  private grade(output: string, expectedOutput: string): boolean {
 
     if (output === expectedOutput) return true;
 

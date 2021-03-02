@@ -1,9 +1,9 @@
 import { validLang } from "../utils/lang";
-import { runCompiler } from "../utils/runCompiler";
+import { runCompiler } from "./runCompiler";
 
 export default async (req: any, res: any) => {
     const lang = req.query.language;
-  const { code, timeout, isMany } = req.query;
+  const { code, timeout, testcases } = req.query;
 
   let language: validLang | undefined;
 
@@ -25,20 +25,17 @@ export default async (req: any, res: any) => {
     language &&
     typeof code === 'string' &&
     (typeof timeout === 'string' || typeof timeout === 'number') &&
-    isMany === 'true' &&
-    typeof req.query.inputsDir === 'string'
+    testcases
   ) {
     const result = await runCompiler(
       language,
       code,
       typeof timeout === 'string' ? parseInt(timeout) : timeout,
-      true,
       undefined,
-      req.query.inputsDir,
+      testcases,
     );
 
-    if (!isError(result.exitCode)) res.send(result.value).status(200);
-    else res.send('Error: code ' + result.exitCode).status(result.exitCode);
+    res.send(result).status(200);
   } else if (
     language &&
     typeof code === 'string' &&
@@ -49,17 +46,13 @@ export default async (req: any, res: any) => {
       language,
       code,
       typeof timeout === 'string' ? parseInt(timeout) : timeout,
-      false,
       req.query.input,
       undefined,
     );
 
-    if (!isError(result.exitCode)) res.send(result.value).status(200);
-    else res.send('Error: code ' + result.exitCode).status(result.exitCode);
+    if (!Array.isArray(result)) {
+      if (result.exitCode === 0) res.send(result).status(200);
+      else res.send('Error: code ' + result.exitCode).status(result.exitCode);
+    }
   } else res.sendStatus(404);
 }
-
-const isError = (exitCode: number) => {
-    if (exitCode !== 0) return true;
-    return false;
-};

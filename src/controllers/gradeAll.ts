@@ -2,10 +2,9 @@ import { Compiler } from "../utils/Compiler";
 import { LanguageMap, validLang } from "../utils/lang";
 
 export default async (req: any, res: any) => {
-  const dir = '/home/ketphan02/PhanKiet/Codelynx/docker-compiler/tests';
 
   const lang = req.query.language;
-  const { code, timeout, isMany } = req.query;
+  const { code, timeout, testcases } = req.query;
 
   let language: validLang | undefined;
 
@@ -33,10 +32,9 @@ export default async (req: any, res: any) => {
         LanguageMap[language],
         code,
         typeof timeout === 'string' ? parseInt(timeout) : timeout,
-        true,
       );
 
-      const results = await compiler.gradeCode(dir);
+      const results = await compiler.gradeCode(testcases);
 
       res.send(results).status(200);
     } catch (err) {

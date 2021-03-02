@@ -1,2 +1,9 @@
 Dockerfile
 .env
+
+.vscode/
+dist/
+node_modules/
+tmp/
+
+package-lock.json
