@@ -9,3 +9,5 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json({ limit: '1MB'}));
 app.use('/', routes);
+
+module.exports = app;

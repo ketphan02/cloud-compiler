@@ -9,7 +9,7 @@ const { connectDb } = require('./utils/mongoDb');
 connectDb(config.mongoUrl).then(() => {
     const server = http.createServer();
   // Mount the express app here
-//   server.on('request', expressApp);
+  server.on('request', expressApp);
 
   // Start server
   server.listen(config.port, () => {

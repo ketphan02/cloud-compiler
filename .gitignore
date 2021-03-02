@@ -9,6 +9,5 @@ tests/
 test_code/
 
 package-lock.json
-tsconfig.json
 
 .env
