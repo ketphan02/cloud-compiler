@@ -6,3 +6,11 @@ services:
       context: .
     ports:
       - '2106:2106'
+    networks:
+      comp:
+  db:
+    image: 'mongo'
+    networks:
+      comp:
+networks:
+  comp:

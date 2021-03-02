@@ -2,7 +2,7 @@ import { Compiler } from "../utils/Compiler";
 import { LanguageMap, validLang } from "../utils/lang";
 
 export default async (req: any, res: any) => {
-  const dir = './tests';
+  const dir = '/home/ketphan02/PhanKiet/Codelynx/docker-compiler/tests';
 
   const lang = req.query.language;
   const { code, timeout, isMany } = req.query;

@@ -12,7 +12,7 @@ export class Compiler {
   private executeScript: string = 'echo "Nothing has been decleared yet"';
   private isMany: boolean;
   private timeout = 1;
-  readonly bashRun = (__dirname + '/Template/executeOne.sh').slice();
+  readonly bashRun = (__dirname + '/../Template/executeOne.sh').slice();
 
   constructor(
     language: Language,
