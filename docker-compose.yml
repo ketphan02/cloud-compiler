@@ -6,3 +6,4 @@ services:
       context: .
     ports:
       - '2106:2106'
+    env_file: .env

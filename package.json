@@ -4,9 +4,9 @@
   "description": "A compiler for devrank",
   "main": "index.js",
   "scripts": {
-    "start": "ts-node index.ts",
-    "dev": "nodemon ./index.ts",
-    "test-feature": "ts-node app.ts"
+    "start": "ts-node src/index.ts",
+    "dev": "nodemon src/index.ts",
+    "test-feature": "ts-node src/app.ts"
   },
   "author": "",
   "license": "ISC",

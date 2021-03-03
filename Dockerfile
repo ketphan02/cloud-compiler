@@ -20,8 +20,8 @@ RUN gcc -v
 RUN apt autoremove -y
 
 # Copy project
-COPY ./src/package.json ./src/package.json
-RUN cd src && npm i && cd ..
+COPY package.json package.json
+RUN npm i
 
 COPY . .
-CMD cd src && npm start
+CMD npm start
