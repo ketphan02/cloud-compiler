@@ -52,7 +52,7 @@ export default async (req: any, res: any) => {
     
     if (!Array.isArray(result)) {
       if (result.exitCode === 0) res.send(result).status(200);
-      else res.send('Error: code ' + result.exitCode).status(result.exitCode);
+      else res.send(result).status(result.exitCode);
     }
   } else res.sendStatus(404);
 }

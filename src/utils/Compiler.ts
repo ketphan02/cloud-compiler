@@ -113,7 +113,7 @@ export class Compiler {
     return {
       exitCode: exitCode,
       value: output.replace('\n' + runTime, ''), // Cut out the last line (runtime)
-      runTime: parseFloat(runTime), // This key is for further usage
+      runTime: runTime ? parseFloat(runTime) : -1, // This key is for further usage
     };
   };
 
