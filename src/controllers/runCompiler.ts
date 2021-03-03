@@ -10,18 +10,12 @@ export const runCompiler = async (
 ) => {
   const compiler = new Compiler(LanguageMap[language], code, timeout);
 
-  console.log(input);
-
   if (testcases) {
-    if (testcases) {
       const result = await compiler.executeMany(testcases);
       return result;
-    }
   } else if (input) {
-    if (input) {
       const result = await compiler.executeOne(input);
       return result;
-    }
   }
 
   return {

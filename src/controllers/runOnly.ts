@@ -3,7 +3,7 @@ import { runCompiler } from "./runCompiler";
 
 export default async (req: any, res: any) => {
     const lang = req.query.language;
-  const { code, timeout, testcases } = req.query;
+  const { code, timeout, input, testcases } = req.query;
 
   let language: validLang | undefined;
 
@@ -40,16 +40,16 @@ export default async (req: any, res: any) => {
     language &&
     typeof code === 'string' &&
     (typeof timeout === 'string' || typeof timeout === 'number') &&
-    typeof req.query.input === 'string'
+    input
   ) {
     const result = await runCompiler(
       language,
       code,
       typeof timeout === 'string' ? parseInt(timeout) : timeout,
-      req.query.input,
+      input,
       undefined,
     );
-
+    
     if (!Array.isArray(result)) {
       if (result.exitCode === 0) res.send(result).status(200);
       else res.send('Error: code ' + result.exitCode).status(result.exitCode);

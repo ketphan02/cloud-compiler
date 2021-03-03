@@ -31,7 +31,7 @@ export class Compiler {
     // Code 2: No file found.
     if (!this.language.build) return 2;
 
-    const exitCode = (await shell.exec(this.language.build)).code;
+    const exitCode = shell.exec(this.language.build).code;
 
     return exitCode;
   };
@@ -44,26 +44,26 @@ export class Compiler {
     // Run one time only (before )
     if (inp !== undefined) {
       // Create a folder to run
-      await shell.mkdir('-p', this.tempPath);
-      await shell.cd(this.tempPath);
+      shell.mkdir('-p', this.tempPath);
+      shell.cd(this.tempPath);
 
       // Create temperary input and output file
-      await shell.touch(this.inpDir);
-      await shell.touch(this.outDir);
+      shell.touch(this.inpDir);
+      shell.touch(this.outDir);
 
     // Write the input into the input temp file (inp will be undefined if preparing for multiple files).
-      await shell.ShellString(inp).to(this.inpDir);
+      shell.ShellString(inp).to(this.inpDir);
     }
 
     // Build file if need to build (this will create a executable file).
     if (this.language.build && this.language.buildFile) {
-      await shell.ShellString(this.code).to(this.language.buildFile);
+      shell.ShellString(this.code).to(this.language.buildFile);
       const buildReturn = await this.buildFile();
       if (buildReturn !== 0) return buildReturn;
     }
     // Write the code to the temp app file
     else if (this.language.executionFile) {
-      await shell.ShellString(this.code).to(this.language.executionFile);
+      shell.ShellString(this.code).to(this.language.executionFile);
     }
   };
 
@@ -71,9 +71,9 @@ export class Compiler {
    * Clean dir after executing script
    */
   private clean = async () => {
-    await shell.rm('-f', this.tempPath + 'app.*');
-    await shell.rm('-f', this.tempPath + '*.inp');
-    await shell.rm('-f', this.tempPath + '*.out');
+    shell.rm('-f', this.tempPath + 'app.*');
+    shell.rm('-f', this.tempPath + '*.inp');
+    shell.rm('-f', this.tempPath + '*.out');
   };
 
   /**
@@ -102,9 +102,9 @@ export class Compiler {
       this.language.execution;
 
       // This block execute the script and get the exitcode + stdout
-    const result = await shell.exec(this.executeScript);
+    const result = shell.exec(this.executeScript);
     const exitCode = result.code;
-    const output = (await shell.cat(this.outDir)).stdout.trim();
+    const output = shell.cat(this.outDir).stdout.trim();
     const runTime = output.slice(output.lastIndexOf('\n') + 1);
 
     // Clear the directory
